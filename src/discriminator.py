@@ -38,7 +38,7 @@ def convert_to_image(arr, image_shape):
 
     return image
 
-class ConvolutionalNet:
+class Discriminator:
     # Args:
     #   input_shape (tuple) - the shape of the input (for images: (image depth, image height, image length))
     def __init__(self, input_shape, layers=None, cost_func=NegLogLikehood):
@@ -189,6 +189,62 @@ class ConvolutionalNet:
             delta = dlt
 
         return np.array(delta_w), np.array(delta_b)
+
+    def get_delta(self, network_input, expected_output):
+        curr_z = network_input
+        z_activations = [network_input]
+
+        is_conv = False
+        if self.layer_types[0] is "conv" or self.layer_types[0] is "deconv":
+            is_conv = True
+
+        for i, lt, lyr in zip(range(1, self.num_layers + 1), self.layer_types, self.layers):
+            # Squash to 1D np array
+            if lt is not "conv" and lt is not "deconv" and is_conv:
+                is_conv = False
+                curr_z = flatten_image(curr_z)
+
+            curr_z = lyr.get_activations(curr_z)
+            z_activations.append(deepcopy(curr_z))
+
+            if not i == self.num_layers:
+                # Use softmax for SM layers, otherwise leaky relu
+                if lt is "soft":
+                    curr_z = Softmax.func(curr_z)
+                else:
+                    curr_z = LeakyRELU.func(curr_z)
+
+        # Store derivatives and activation for output layer
+        if self.layer_types[-1] is "soft":
+            squashed_activations = Softmax.func(deepcopy(curr_z))
+            squashed_activations_deriv = Softmax.func_deriv(deepcopy(curr_z))
+        else:
+            squashed_activations = LeakyRELU.func_deriv(deepcopy(curr_z))
+            squashed_activations_deriv = LeakyRELU.func_deriv(deepcopy(curr_z))
+
+        # Errors for the last layer
+        delta = self.cost_func.delta(squashed_activations,
+                                     squashed_activations_deriv,
+                                     expected_output)
+
+        is_conv = True
+        if self.layer_types[self.num_layers - 1] is not "conv" \
+                and self.layer_types[self.num_layers - 1] is not "deconv":
+            is_conv = False
+
+        # Append all the errors for each layer
+        for lt, lyr, zprev in reversed(zip(self.layer_types, self.layers, z_activations[:-1])):
+            if lt is "conv" or lt is "deconv":
+                if not is_conv:
+                    delta = convert_to_image(delta, lyr.get_output_shape())
+                    is_conv = True
+
+            dw, db, dlt = lyr.backprop(zprev, delta)
+
+            delta = dlt
+            
+        return delta
+
 
     # Updates the network given a specific minibatch (done by averaging gradients over the minibatch)
     # Args:

@@ -18,12 +18,11 @@ class LeakyRELU:
     # Derivative for leaky relu
     @staticmethod
     def func_deriv(z):
-        if isinstance(z, float) or isinstance(z, int):
+        if isinstance(z, float) or isinstance(z, int) or isinstance(z, np.float32):
             if z > 0:
                 return 1
             else:
                 return 0.1
-
         for i, zi in enumerate(z):
             z[i] = LeakyRELU.func_deriv(zi)
         return z

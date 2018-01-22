@@ -91,7 +91,7 @@ class Generator:
             curr_z = LeakyRELU.func(curr_z)
 
 
-        delta = discriminator_network.get_delta(deepcopy(curr_z), expected_output)*LeakyRELU.func_deriv(deepcopy(curr_z))
+        delta = discriminator_network.get_delta(deepcopy(curr_z), expected_output)
         delta_w = []
         delta_b = []
 
@@ -141,15 +141,11 @@ class Generator:
     #   mini_batch_size - (int), number of training examples per mini batch
     #   training_inputs - (list), the list of training inputs
     #   expected_outputs - (list), the list of expected outputs for each input
-    def stochastic_gradient_descent(self, epochs, step_size, mini_batch_size, training_inputs, expected_outputs, discriminator_network):
-        training_set = []
-        for inp, outp in zip(training_inputs, expected_outputs):
-            training_set.append((inp, outp))
-
+    def stochastic_gradient_descent(self, epochs, step_size, mini_batch_size, training_set, discriminator_network):
         # Train
         for ep in range(epochs):
             shuffle(training_inputs)
             for x in range(0, len(training_inputs), mini_batch_size):
                 self.update_network(training_inputs[x:x+mini_batch_size], step_size)
             # Update with progress
-            print("Epoch: %d   Average cost: %f" % (ep+1, self.evaluate_cost(training_set, discriminator_network)))
+            print("Generator Epoch: %d   Average cost: %f" % (ep+1, self.evaluate_cost(training_set, discriminator_network)))

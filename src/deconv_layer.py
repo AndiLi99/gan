@@ -2,6 +2,7 @@ from kernel import Kernel
 import numpy as np
 
 from activation_functions import LeakyRELU
+from activation_functions import Sigmoid
 
 # leaky relu function
 def func (z):

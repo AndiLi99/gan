@@ -207,20 +207,18 @@ class Discriminator:
             curr_z = lyr.get_activations(curr_z)
             z_activations.append(deepcopy(curr_z))
 
-            if not i == self.num_layers:
-                # Use softmax for SM layers, otherwise leaky relu
-                if lt is "soft":
-                    curr_z = Softmax.func(curr_z)
-                else:
-                    curr_z = LeakyRELU.func(curr_z)
+            # Use softmax for SM layers, otherwise leaky relu
+            if lt is "soft":
+                curr_z = Softmax.func(curr_z)
+            else:
+                curr_z = LeakyRELU.func(curr_z)
 
         # Store derivatives and activation for output layer
+        squashed_activations = curr_z
         if self.layer_types[-1] is "soft":
-            squashed_activations = Softmax.func(deepcopy(curr_z))
-            squashed_activations_deriv = Softmax.func_deriv(deepcopy(curr_z))
+            squashed_activations_deriv = Softmax.func_deriv(z_activations[-1])
         else:
-            squashed_activations = LeakyRELU.func_deriv(deepcopy(curr_z))
-            squashed_activations_deriv = LeakyRELU.func_deriv(deepcopy(curr_z))
+            squashed_activations_deriv = LeakyRELU.func_deriv(z_activations[-1])
 
         # Errors for the last layer
         delta = self.cost_func.delta(squashed_activations,
@@ -240,7 +238,6 @@ class Discriminator:
                     is_conv = True
 
             dw, db, dlt = lyr.backprop(zprev, delta)
-
             delta = dlt
 
         return delta

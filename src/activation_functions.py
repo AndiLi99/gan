@@ -18,13 +18,38 @@ class LeakyRELU:
     # Derivative for leaky relu
     @staticmethod
     def func_deriv(z):
-        if isinstance(z, float) or isinstance(z, int) or isinstance(z, np.float32):
+        if isinstance(z, float) or isinstance(z, int):
             if z > 0:
                 return 1
             else:
                 return 0.1
         for i, zi in enumerate(z):
             z[i] = LeakyRELU.func_deriv(zi)
+        return z
+
+class Sigmoid:
+    # function
+    @staticmethod
+    def func (z):
+        if isinstance(z, float) or isinstance(z, int):
+            if z > 15:
+                return 0.999999999
+            elif z < -15:
+                return 0.000000001
+            else:
+                return np.exp(z)
+        for i, zi in enumerate(z):
+            z[i] = Sigmoid.func(zi)
+        return z
+
+    # func derivative
+    @staticmethod
+    def func_deriv (z):
+        if isinstance(z, float) or isinstance(z, int):
+            z = Sigmoid.func(z)
+            return z*(1-z)
+        for i, zi in enumerate(z):
+            z[i] = Sigmoid.func_deriv(zi)
         return z
 
 # Softmax function

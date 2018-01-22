@@ -130,7 +130,7 @@ class Generator:
         total = 0.0
         for inp, outp in training_set:
             net_outp = self.feed_forward(inp)
-            total += discriminator_network.cost_func.cost(net_outp, outp)
+            total += discriminator_network.cost_func.cost(discriminator_network.feed_forward(net_outp), outp)
 
         return total/len(training_set)
 
@@ -144,8 +144,8 @@ class Generator:
     def stochastic_gradient_descent(self, epochs, step_size, mini_batch_size, training_set, discriminator_network):
         # Train
         for ep in range(epochs):
-            shuffle(training_inputs)
-            for x in range(0, len(training_inputs), mini_batch_size):
-                self.update_network(training_inputs[x:x+mini_batch_size], step_size)
+            shuffle(training_set)
+            for x in range(0, len(training_set), mini_batch_size):
+                self.update_network(training_set[x:x+mini_batch_size], step_size, discriminator_network)
             # Update with progress
             print("Generator Epoch: %d   Average cost: %f" % (ep+1, self.evaluate_cost(training_set, discriminator_network)))
